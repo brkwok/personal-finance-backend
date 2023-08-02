@@ -12,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const { authRouter } = require("./routes");
+const { ensureAuthenticated, refreshSession } = require("./middlewares");
 
 mongoose
 	.connect(process.env.MONGO_URI, { useNewUrlParser: true })
@@ -52,6 +53,8 @@ app.use(
 	})
 );
 
+app.use(refreshSession);
+
 // Initialize Passport and restore authentication state from session (if available)
 app.use(passport.initialize());
 app.use(passport.session());
@@ -59,3 +62,4 @@ app.use(passport.session());
 // Connect to the MongoDB database using Mongoose
 
 app.use("/", authRouter);
+app.use("/dashboard", ensureAuthenticated);
