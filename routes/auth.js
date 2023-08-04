@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
+const ensureAuthenticated = require("../middlewares/ensureAuthenticated");
 require("dotenv").config;
 
 passport.use(
@@ -10,6 +11,7 @@ passport.use(
 			clientID: process.env["GOOGLE_CLIENT_ID"],
 			clientSecret: process.env["GOOGLE_CLIENT_SECRET"],
 			callbackURL: "/oauth2/redirect/google",
+			proxy: true,
 			scope: ["profile", "email"],
 		},
 		async (_accessToken, _refreshToken, profile, done) => {
@@ -29,7 +31,7 @@ passport.use(
 
 passport.serializeUser(function (user, cb) {
 	process.nextTick(function () {
-		cb(null, { id: user.id, username: user.username, name: user.name });
+		cb(null, { id: user.id });
 	});
 });
 
@@ -46,8 +48,8 @@ router.get("/login/federated/google", passport.authenticate("google"));
 router.get(
 	"/oauth2/redirect/google",
 	passport.authenticate("google", {
-		successReturnToOrRedirect: "/",
-		failureRedirect: "/login",
+		successReturnToOrRedirect: process.env.CLIENT_LOGIN_REDIRECT,
+		failureRedirect: process.env.CLIENT_LOGIN_FAILURE_REDIRECT,
 	})
 );
 
@@ -56,8 +58,28 @@ router.post("/logout", function (req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		res.redirect("/");
+		res.status(200).send({ message: "Succesfully logged out" });
 	});
+});
+
+router.get("/auth/user", ensureAuthenticated, async function (req, res) {
+	try {
+		// Retrieve the authenticated user's ID from the session
+		const userId = req.user.id;
+
+		// Fetch user data from the database based on the user's ID
+		const user = await User.findById(userId);
+
+		if (!user) {
+			return res.status(404).json({ error: "User not found" });
+		}
+
+		// Return the user data as the API response
+		res.json({ displayName: user.displayName });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: "Internal server error" });
+	}
 });
 
 module.exports = router;

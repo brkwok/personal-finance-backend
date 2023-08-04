@@ -12,7 +12,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const { authRouter } = require("./routes");
-const { ensureAuthenticated, refreshSession } = require("./middlewares");
+
+// Allow Cross-Origin Resource Sharing (CORS)
+app.use(
+	cors({
+		origin: "http://localhost:3000",
+		credentials: true,
+		exposedHeaders: ["set-cookie"],
+	})
+);
 
 mongoose
 	.connect(process.env.MONGO_URI, { useNewUrlParser: true })
@@ -26,9 +34,6 @@ mongoose
 	.catch((err) => {
 		console.error(err);
 	});
-
-// Allow Cross-Origin Resource Sharing (CORS)
-app.use(cors());
 
 // Parse incoming JSON data
 app.use(express.json());
@@ -53,13 +58,15 @@ app.use(
 	})
 );
 
-app.use(refreshSession);
-
 // Initialize Passport and restore authentication state from session (if available)
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Connect to the MongoDB database using Mongoose
+const { ensureAuthenticated, refreshSession } = require("./middlewares");
+
+app.use(refreshSession);
 
 app.use("/", authRouter);
-app.use("/dashboard", ensureAuthenticated);
+app.get("/test", ensureAuthenticated, (req, res, next) => {
+	res.status(200).send({ message: "hi" });
+});

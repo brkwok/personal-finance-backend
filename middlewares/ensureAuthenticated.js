@@ -1,4 +1,4 @@
-const Boom = require("@hapi/boom");
+const Boom = requie("@hapi/boom");
 
 const ensureAuthenticated = (req, res, next) => {
 	if (req.isAuthenticated()) {
@@ -6,7 +6,7 @@ const ensureAuthenticated = (req, res, next) => {
 		return next();
 	} else {
 		// redirect user to the login
-		return res.redirect("/login");
+		res.status(401).send({ message: "You must be logged in" });
 	}
 };
 
