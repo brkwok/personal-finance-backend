@@ -1,5 +1,3 @@
-const Boom = requie("@hapi/boom");
-
 const ensureAuthenticated = (req, res, next) => {
 	if (req.isAuthenticated()) {
 		// If the user is authenticated, proceed to the next middleware/route handler

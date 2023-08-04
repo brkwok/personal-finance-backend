@@ -66,7 +66,5 @@ const { ensureAuthenticated, refreshSession } = require("./middlewares");
 
 app.use(refreshSession);
 
-app.use("/", authRouter);
-app.get("/test", ensureAuthenticated, (req, res, next) => {
-	res.status(200).send({ message: "hi" });
-});
+app.use("/auth", authRouter);
+

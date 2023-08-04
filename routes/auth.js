@@ -43,10 +43,10 @@ passport.deserializeUser(function (user, cb) {
 
 const router = express.Router();
 
-router.get("/login/federated/google", passport.authenticate("google"));
+router.get("/federated/google", passport.authenticate("google"));
 
 router.get(
-	"/oauth2/redirect/google",
+	"/redirect/google",
 	passport.authenticate("google", {
 		successReturnToOrRedirect: process.env.CLIENT_LOGIN_REDIRECT,
 		failureRedirect: process.env.CLIENT_LOGIN_FAILURE_REDIRECT,
@@ -62,7 +62,7 @@ router.post("/logout", function (req, res, next) {
 	});
 });
 
-router.get("/auth/user", ensureAuthenticated, async function (req, res) {
+router.get("/user", ensureAuthenticated, async function (req, res) {
 	try {
 		// Retrieve the authenticated user's ID from the session
 		const userId = req.user.id;
