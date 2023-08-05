@@ -62,7 +62,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-const { ensureAuthenticated, refreshSession } = require("./middlewares");
+const { refreshSession } = require("./middlewares");
 
 app.use(refreshSession);
 

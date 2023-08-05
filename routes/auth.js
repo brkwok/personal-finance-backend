@@ -10,7 +10,7 @@ passport.use(
 		{
 			clientID: process.env["GOOGLE_CLIENT_ID"],
 			clientSecret: process.env["GOOGLE_CLIENT_SECRET"],
-			callbackURL: "/oauth2/redirect/google",
+			callbackURL: "/auth/redirect/google",
 			proxy: true,
 			scope: ["profile", "email"],
 		},
@@ -49,8 +49,10 @@ router.get(
 	"/redirect/google",
 	passport.authenticate("google", {
 		successReturnToOrRedirect: process.env.CLIENT_LOGIN_REDIRECT,
-		failureRedirect: process.env.CLIENT_LOGIN_FAILURE_REDIRECT,
-	})
+	}),
+	(_req, res) => {
+		res.status(400).send({ message: "Failed to log in" });
+	}
 );
 
 router.post("/logout", function (req, res, next) {
