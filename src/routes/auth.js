@@ -1,9 +1,25 @@
 const express = require("express");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const LocalStrategy = require("passport-local").Strategy;
 const User = require("../models/User");
 const ensureAuthenticated = require("../middlewares/ensureAuthenticated");
 require("dotenv").config;
+
+passport.use(
+	new LocalStrategy(async (username, password, done) => {
+		const user = await User.findOne({ username: username });
+
+		if (user) {
+			return done(null, user);
+		} else {
+			const err = new Error("Failed to Log In");
+			err.status = 401;
+
+			return done(err);
+		}
+	})
+);
 
 passport.use(
 	new GoogleStrategy(
@@ -20,7 +36,7 @@ passport.use(
 			if (existingUser) {
 				return done(null, existingUser);
 			} else {
-				const err = new Error("Unauthorized Access");
+				const err = new Error("Failed to Log In");
 				err.status = 401;
 
 				return done(err);
@@ -55,6 +71,16 @@ router.get(
 	}
 );
 
+router.post(
+	"/demo",
+	passport.authenticate("local", {
+		successReturnToOrRedirect: process.env.CLIENT_LOGIN_REDIRECT,
+	}),
+	(_req, res) => {
+		res.status(400).send({ message: "Failed to log in" });
+	}
+);
+
 router.post("/logout", function (req, res, next) {
 	req.logout(function (err) {
 		if (err) {
@@ -77,7 +103,12 @@ router.get("/user", ensureAuthenticated, async function (req, res) {
 		}
 
 		// Return the user data as the API response
-		res.json({ displayName: user.displayName });
+		res.status(200).send({
+			data: {
+				displayName: user.displayName,
+				profilePicUrl: user.profilePicUrl,
+			},
+		});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ error: "Internal server error" });
