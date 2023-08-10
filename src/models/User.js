@@ -15,20 +15,21 @@ const userSchema = new mongoose.Schema({
 		required: true,
 	},
 	profilePicUrl: {
-		type: String
+		type: String,
 	},
 	createdAt: {
 		type: Date,
 		default: Date.now,
 	},
-	userName: {
-		type: String
+	username: {
+		type: String,
+		unique: true,
 	},
 	password: {
-		type: String
-	}
+		type: String,
+	},
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
