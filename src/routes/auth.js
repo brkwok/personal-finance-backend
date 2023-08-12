@@ -4,13 +4,12 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const LocalStrategy = require("passport-local").Strategy;
 const User = require("../models/User");
 const ensureAuthenticated = require("../middlewares/ensureAuthenticated");
-require("dotenv").config;
 
 passport.use(
 	new LocalStrategy(async (username, password, done) => {
-		const user = await User.findOne({ username: username });
+		const user = await User.findOne({ username });
 
-		if (user) {
+		if (user && user.password === password) {
 			return done(null, user);
 		} else {
 			const err = new Error("Failed to Log In");
@@ -47,7 +46,7 @@ passport.use(
 
 passport.serializeUser(function (user, cb) {
 	process.nextTick(function () {
-		cb(null, { id: user.id });
+		cb(null, { id: user.id, username: user.username });
 	});
 });
 
@@ -71,15 +70,25 @@ router.get(
 	}
 );
 
-router.post(
-	"/demo",
-	passport.authenticate("local", {
-		successReturnToOrRedirect: process.env.CLIENT_LOGIN_REDIRECT,
-	}),
-	(_req, res) => {
-		res.status(400).send({ message: "Failed to log in" });
-	}
-);
+router.post("/demo", (req, res, next) => {
+	passport.authenticate("local", (err, user, info) => {
+		if (err) {
+			return res.status(500).send({ error: "An error occurred" });
+		}
+
+		if (!user) {
+			return res.status(401).send({ message: "Authentication failed" });
+		}
+
+		req.logIn(user, (err) => {
+			if (err) {
+				return res.status(500).send({ error: "An error occurred" });
+			}
+
+			return res.status(200).send({ displayName: user.displayName, profilePicUrl: user.profilePicUrl });
+		});
+	})(req, res, next);
+});
 
 router.post("/logout", function (req, res, next) {
 	req.logout(function (err) {
@@ -99,7 +108,7 @@ router.get("/user", ensureAuthenticated, async function (req, res) {
 		const user = await User.findById(userId);
 
 		if (!user) {
-			return res.status(404).json({ error: "User not found" });
+			return res.json({ error: "User not found" });
 		}
 
 		// Return the user data as the API response

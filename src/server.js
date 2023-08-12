@@ -22,7 +22,7 @@ const options = {
 
 var httpsServer = https.createServer(options, app);
 
-const { authRouter, plaidRouter } = require("./routes");
+const { authRouter, plaidRouter, itemsRouter } = require("./routes");
 
 // Allow Cross-Origin Resource Sharing (CORS)
 app.use(
@@ -60,7 +60,7 @@ app.use(
 	session({
 		secret: process.env.SESSION_SECRET, // A secret key used to sign the session ID cookie
 		resave: true, // Force the session to be saved back to the session store even if it was not modified
-		cookie: { maxAge: 1000 * 60 * 60 }, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
+		cookie: { maxAge: 1000 * 60 * 10 }, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
 		saveUninitialized: false, // Do not save uninitialized sessions (e.g., if the session is new but not modified)
 		store: MongoStore.create({
 			// Use connect-mongo to store sessions in MongoDB
@@ -79,3 +79,4 @@ app.use(refreshSession);
 
 app.use("/auth", authRouter);
 app.use("/plaid", plaidRouter);
+app.use("/items", itemsRouter);
