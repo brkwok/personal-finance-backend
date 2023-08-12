@@ -48,3 +48,7 @@ const createOrUpdateTransactions = async (transactions) => {
 		return pendingQueries;
 	});
 };
+
+module.exports = {
+	createOrUpdateTransactions,
+};
