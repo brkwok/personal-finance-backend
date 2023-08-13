@@ -8,7 +8,8 @@ const { demoClient, client } = require("../helpers/plaid");
 const {
 	createItem,
 	retrieveItemByPlaidInstitutionId,
-} = require("../controllers/items");
+} = require("../controllers");
+const updateTransactions = require("../helpers/plaidTransactions");
 
 router.post("/", ensureAuthenticated, async function (req, res) {
 	const userId = req.user.id;
@@ -22,9 +23,9 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 	);
 
 	if (existingItem) {
-		res
+		return res
 			.status(409)
-			.send("You have already linked an item at this institution.");
+			.json("You have already linked an item at this institution.");
 	}
 
 	const plaidClient = username === "demo" ? demoClient : client;
@@ -36,15 +37,17 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 	const accessToken = response.data.access_token;
 	const itemId = response.data.item_id;
 
-	try {
-		await createItem(institutionId, accessToken, itemId, userId, accounts);
+	const item = await createItem(
+		institutionId,
+		accessToken,
+		itemId,
+		userId,
+		accounts
+	);
 
+	const updated = await updateTransactions(itemId, plaidClient);
 
-
-		res.json("Item successfully created");
-	} catch (err) {
-		res.status(500).json("Error creating item");
-	}
+	res.status(200).json({ message: "Item successfully created", item });
 });
 
 module.exports = router;

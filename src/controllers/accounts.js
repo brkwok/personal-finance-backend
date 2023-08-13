@@ -2,7 +2,6 @@ const { Account } = require("../models");
 const { retrieveItemByPlaidItemId } = require("./items");
 
 const createAccounts = async (plaidItemId, accounts) => {
-	console.log("plaidItemId", plaidItemId);
 	const { _id: itemId } = await retrieveItemByPlaidItemId(plaidItemId);
 
 	const queries = accounts.map(async (account) => {
