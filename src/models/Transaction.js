@@ -20,11 +20,11 @@ const transactionSchema = new mongoose.Schema(
 		subcategory: {
 			type: String,
 		},
-		type: {
+		transactionType: {
 			type: String,
 			required: true,
 		},
-		name: {
+		transactionName: {
 			type: String,
 			required: true,
 		},
@@ -38,7 +38,7 @@ const transactionSchema = new mongoose.Schema(
 		unofficialCurrencyCode: {
 			type: String,
 		},
-		date: {
+		transactionDate: {
 			type: Date,
 			required: true,
 		},
@@ -75,10 +75,10 @@ const transactionSchema = new mongoose.Schema(
 				pending,
 				accountOwner
 			) {
-				const transaction = this.find({ plaidTransactionId });
+				const transaction = await this.findOne({ plaidTransactionId });
 
 				if (transaction) {
-					this.updateOne({
+					transaction.updateOne({
 						accountId,
 						plaidTransactionId,
 						plaidCategoryId,
@@ -94,7 +94,7 @@ const transactionSchema = new mongoose.Schema(
 						accountOwner,
 					});
 				} else {
-					this.create({
+					await this.create({
 						accountId,
 						plaidTransactionId,
 						plaidCategoryId,

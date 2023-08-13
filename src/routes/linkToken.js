@@ -62,7 +62,7 @@ router.post(
 
 			res.json(createTokenResponse.data);
 		} catch (error) {
-			console.error(error);
+			console.error(error.message);
 
 			res.json(err.response.data);
 		}

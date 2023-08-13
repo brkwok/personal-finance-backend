@@ -1,4 +1,4 @@
-const { Transaction } = require("../models");
+const { Transaction, Account, Item } = require("../models");
 
 const { retrieveAccountByPlaidAccountId } = require("./accounts");
 
@@ -19,11 +19,12 @@ const createOrUpdateTransactions = async (transactions) => {
 			account_owner: accountOwner,
 		} = transaction;
 
-		const { id: accountId } = await retrieveAccountByPlaidAccountId(
+		const { _id: accountId } = await retrieveAccountByPlaidAccountId(
 			plaidAccountId
 		);
 
-		const [category, subcategory] = categories;
+		const [category, subcategory] =
+			categories !== null ? [categories[0], categories[1]] : [null, null];
 
 		try {
 			await Transaction.createOrUpdate(
@@ -42,13 +43,52 @@ const createOrUpdateTransactions = async (transactions) => {
 				accountOwner
 			);
 		} catch (err) {
-			console.error(err.message);
+			console.error("createOrUpdate error");
 		}
-
-		return pendingQueries;
 	});
+};
+
+const retrieveTransactionsByAccountId = async (accountId) =>
+	await Transaction.find({ accountId });
+
+const retrieveTransactionsByItemId = async (itemId) =>
+	await Account.find({ itemId }).populate("transactions");
+
+const retrieveTransactionsByUserId = async (userId) => {
+	const items = await Item.find({ userId })
+		.populate({
+			path: "accounts",
+			populate: {
+				path: "transactions",
+				model: "Transaction",
+			},
+		})
+		.exec((err, items) => {
+			if (err) {
+				console.error(err.message);
+				return;
+			}
+		});
+
+	const transactions = items.flatMap((item) =>
+		item.accounts.flatMap((account) => account.transactions)
+	);
+
+	return transactions;
+};
+
+const deleteTransactions = async (plaidTransactionIds) => {
+	const queries = plaidTransactionIds.map(async (plaidTransactionId) => {
+		await Transaction.findOneAndDelete({ plaidTransactionId });
+	});
+
+	return queries;
 };
 
 module.exports = {
 	createOrUpdateTransactions,
+	retrieveTransactionsByAccountId,
+	retrieveTransactionsByItemId,
+	retrieveTransactionsByUserId,
+	deleteTransactions,
 };

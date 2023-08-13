@@ -43,7 +43,7 @@ mongoose
 		});
 	})
 	.catch((err) => {
-		console.error(err);
+		console.error(err.message);
 	});
 
 // Parse incoming JSON data
@@ -60,7 +60,7 @@ app.use(
 	session({
 		secret: process.env.SESSION_SECRET, // A secret key used to sign the session ID cookie
 		resave: true, // Force the session to be saved back to the session store even if it was not modified
-		cookie: { maxAge: 1000 * 60 * 10 }, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
+		cookie: { maxAge: 1000 * 60 * 60 }, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
 		saveUninitialized: false, // Do not save uninitialized sessions (e.g., if the session is new but not modified)
 		store: MongoStore.create({
 			// Use connect-mongo to store sessions in MongoDB
@@ -74,8 +74,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 const { refreshSession } = require("./middlewares");
-
-app.use(refreshSession);
 
 app.use("/auth", authRouter);
 app.use("/plaid", plaidRouter);

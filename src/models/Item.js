@@ -5,6 +5,12 @@ const itemSchema = new mongoose.Schema({
 		type: mongoose.SchemaTypes.ObjectId,
 		ref: "User",
 	},
+	accounts: [
+		{
+			type: mongoose.SchemaTypes.ObjectId,
+			ref: "Account",
+		},
+	],
 	plaidAccessToken: {
 		type: String,
 		unique: true,

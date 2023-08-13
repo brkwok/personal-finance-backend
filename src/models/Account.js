@@ -6,6 +6,12 @@ const accountSchema = new mongoose.Schema(
 			type: mongoose.SchemaTypes.ObjectId,
 			ref: "Item",
 		},
+		transactions: [
+			{
+				type: mongoose.SchemaTypes.ObjectId,
+				ref: "Transaction",
+			},
+		],
 		plaidAccountId: {
 			type: String,
 			unique: true,
@@ -38,7 +44,7 @@ const accountSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
-		subType: {
+		subtype: {
 			type: String,
 			required: true,
 		},
@@ -59,9 +65,9 @@ const accountSchema = new mongoose.Schema(
 			findByUserId(userId) {
 				return this.find({ userId });
 			},
-      findByItemId(itemId) {
-        return this.find({ itemId });
-      }
+			findByItemId(itemId) {
+				return this.find({ itemId });
+			},
 		},
 	}
 );
