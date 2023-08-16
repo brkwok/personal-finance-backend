@@ -6,7 +6,7 @@ const MongoStore = require("connect-mongo");
 const session = require("express-session");
 const passport = require("passport");
 const fs = require("fs");
-const http = require("http");
+// const http = require("http");
 const https = require("https");
 const path = require("path");
 
@@ -22,7 +22,12 @@ const options = {
 
 var httpsServer = https.createServer(options, app);
 
-const { authRouter, plaidRouter, itemsRouter } = require("./routes");
+const {
+	authRouter,
+	plaidRouter,
+	itemsRouter,
+	transactionsRouter,
+} = require("./routes");
 
 // Allow Cross-Origin Resource Sharing (CORS)
 app.use(
@@ -73,8 +78,11 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-const { refreshSession } = require("./middlewares");
+const { refreshSession, ensureAuthenticated } = require("./middlewares");
+
+app.use(refreshSession);
 
 app.use("/auth", authRouter);
-app.use("/plaid", plaidRouter);
-app.use("/items", itemsRouter);
+app.use("/plaid", ensureAuthenticated, plaidRouter);
+app.use("/items", ensureAuthenticated, itemsRouter);
+app.use("/transactions", ensureAuthenticated, transactionsRouter);

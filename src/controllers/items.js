@@ -79,11 +79,16 @@ const updateItemStatus = async (itemId, status) =>
  * @param {string} transactionsCursor
  * @returns {Object}
  */
-const updateItemTransactionsCursor = async (itemId, transactionsCursor) =>
-	await Item.findOneAndUpdate(
-		{ _id: itemId },
-		{ transactionsCursor }
-	);
+const updateItemTransactionsCursor = async (
+	plaidItemId,
+	transactionsCursor
+) => {
+	const item = await Item.findOne({ plaidItemId });
+
+	item.transactionsCursor = transactionsCursor;
+
+	await item.save();
+};
 
 /**
  *

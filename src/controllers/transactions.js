@@ -2,8 +2,8 @@ const { Transaction, Account, Item } = require("../models");
 
 const { retrieveAccountByPlaidAccountId } = require("./accounts");
 
-const createOrUpdateTransactions = async (transactions) => {
-	const pendingQueries = transactions.map(async (transaction) => {
+const createOrUpdateTransactions = async (transactions, userId) => {
+	const pendingQueries = await transactions.map(async (transaction) => {
 		const {
 			account_id: plaidAccountId,
 			transaction_id: plaidTransactionId,
@@ -40,10 +40,11 @@ const createOrUpdateTransactions = async (transactions) => {
 				unofficialCurrencyCode,
 				transactionDate,
 				pending,
-				accountOwner
+				accountOwner,
+				userId
 			);
 		} catch (err) {
-			console.error("createOrUpdate error");
+			console.error(`createOrUpdate error: ${err.message}`);
 		}
 	});
 };
@@ -54,35 +55,41 @@ const retrieveTransactionsByAccountId = async (accountId) =>
 const retrieveTransactionsByItemId = async (itemId) =>
 	await Account.find({ itemId }).populate("transactions");
 
-const retrieveTransactionsByUserId = async (userId) => {
-	const items = await Item.find({ userId })
-		.populate({
-			path: "accounts",
-			populate: {
-				path: "transactions",
-				model: "Transaction",
-			},
-		})
-		.exec((err, items) => {
-			if (err) {
-				console.error(err.message);
-				return;
-			}
-		});
-
-	const transactions = items.flatMap((item) =>
-		item.accounts.flatMap((account) => account.transactions)
-	);
+const retrieveTransactionsByUserId = async (
+	userId,
+	year = new Date().getFullYear(),
+	month = new Date().getMonth()
+) => {
+	const transactions = await Transaction.find({
+		userId,
+		transactionDate: {
+			$gte: new Date(year, month - 1, 1),
+			$lt: new Date(year, month, 1),
+		},
+	});
 
 	return transactions;
 };
 
-const deleteTransactions = async (plaidTransactionIds) => {
-	const queries = plaidTransactionIds.map(async (plaidTransactionId) => {
-		await Transaction.findOneAndDelete({ plaidTransactionId });
-	});
+const retrieveOldestTransaction = async (userId) => {
+	const oldest = await Transaction.findOne(
+		{ userId },
+		{},
+		{ sort: { transactionDate: 1 } }
+	);
 
-	return queries;
+	return oldest;
+};
+
+const deleteTransactions = async (plaidTransactionIds) => {
+	try {
+		plaidTransactionIds.map(async (plaidTransactionId) => {
+			await Transaction.findOneAndDelete({ plaidTransactionId });
+		});
+	} catch (err) {
+		console.error(err.message);
+		throw new Error(err);
+	}
 };
 
 module.exports = {
@@ -91,4 +98,5 @@ module.exports = {
 	retrieveTransactionsByItemId,
 	retrieveTransactionsByUserId,
 	deleteTransactions,
+	retrieveOldestTransaction,
 };

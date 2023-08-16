@@ -33,18 +33,18 @@ const fetchTransactionUpdates = async (plaidItemId, client) => {
 			added = added.concat(data.added);
 			modified = modified.concat(data.modified);
 			removed = removed.concat(data.removed);
-			hadMore = false;
+			hasMore = data.hasMore;
 			cursor = data.next_cursor;
 		}
 	} catch (err) {
-		console.error(`fetchTransactionUpdatesError: ${err.message?.data}`);
+		console.error(`fetchTransactionUpdatesError: ${err.message}`);
 		cursor = lastCursor;
 	}
 
 	return { added, modified, removed, cursor, accessToken };
 };
 
-const updateTransactions = async (plaidItemId, client) => {
+const updateTransactions = async (plaidItemId, client, userId) => {
 	const { added, modified, removed, cursor, accessToken } =
 		await fetchTransactionUpdates(plaidItemId, client);
 
@@ -56,11 +56,14 @@ const updateTransactions = async (plaidItemId, client) => {
 		data: { accounts },
 	} = await client.accountsGet(request);
 
-	await createAccounts(plaidItemId, accounts);
-
-	await createOrUpdateTransactions(added.concat(modified));
-	// await deleteTransactions(removed);
-	// await updateItemTransactionsCursor(plaidItemId, cursor);
+	try {
+		await createAccounts(plaidItemId, accounts);
+		await createOrUpdateTransactions(added.concat(modified), userId);
+		await deleteTransactions(removed);
+		await updateItemTransactionsCursor(plaidItemId, cursor);
+	} catch (err) {
+		console.error(err.message);
+	}
 
 	return {
 		addedCount: added.length,
