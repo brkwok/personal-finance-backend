@@ -12,13 +12,13 @@ router.post("/", async (req, res) => {
 	const { year, month } = req.body;
 
 	try {
-		const transactions = await retrieveTransactionsByUserId(
+		const [transactions, transactionsAggregation] = await retrieveTransactionsByUserId(
 			userId,
 			year,
 			month
 		);
 
-		res.json(transactions);
+		res.json({transactions, transactionsAggregation});
 	} catch (err) {
 		console.error("Error retrieving transactions", err.message);
 		res.status(500).json(err);

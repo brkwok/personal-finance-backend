@@ -1,6 +1,7 @@
-const { Transaction, Account, Item } = require("../models");
+const { Transaction, Account } = require("../models");
 
 const { retrieveAccountByPlaidAccountId } = require("./accounts");
+const { Types } = require("mongoose");
 
 const createOrUpdateTransactions = async (transactions, userId) => {
 	const pendingQueries = await transactions.map(async (transaction) => {
@@ -66,9 +67,38 @@ const retrieveTransactionsByUserId = async (
 			$gte: new Date(year, month - 1, 1),
 			$lt: new Date(year, month, 1),
 		},
-	});
+	}).sort({ transactionDate: -1 });
 
-	return transactions;
+	const transactionsAggregation = await Transaction.aggregate([
+		{
+			$match: {
+				userId: new Types.ObjectId(userId),
+				transactionDate: {
+					$gte: new Date(year, month - 1, 1),
+					$lt: new Date(year, month, 1),
+				},
+			},
+		},
+		{
+			$group: {
+				_id: {
+					$ifNull: ["$category", "Other"],
+				},
+				totalAmount: {
+					$sum: "$amount",
+				},
+			},
+		},
+		{
+			$project: {
+				category: "$_id",
+				totalAmount: 1,
+				_id: 0,
+			},
+		},
+	]);
+
+	return [transactions, transactionsAggregation];
 };
 
 const retrieveOldestTransaction = async (userId) => {
