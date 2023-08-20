@@ -25,7 +25,7 @@ const createOrUpdateTransactions = async (transactions, userId) => {
 		);
 
 		const [category, subcategory] =
-			categories !== null ? [categories[0], categories[1]] : [null, null];
+			categories !== null ? [categories[0], categories[1]] : ["Other", "Other"];
 
 		try {
 			await Transaction.createOrUpdate(
@@ -69,7 +69,15 @@ const retrieveTransactionsByUserId = async (
 		},
 	}).sort({ transactionDate: -1 });
 
-	const transactionsAggregation = await Transaction.aggregate([
+	return transactions;
+};
+
+const retrieveTransactionAggregation = async (
+	userId,
+	year = new Date().getFullYear(),
+	month = new Date().getMonth()
+) => {
+	const currentMonthAggregation = await Transaction.aggregate([
 		{
 			$match: {
 				userId: new Types.ObjectId(userId),
@@ -98,7 +106,82 @@ const retrieveTransactionsByUserId = async (
 		},
 	]);
 
-	return [transactions, transactionsAggregation];
+	const previousMonthAggregation = await Transaction.aggregate([
+		{
+			$match: {
+				userId: new Types.ObjectId(userId),
+				transactionDate: {
+					$gte: new Date(year, month - 2, 1),
+					$lt: new Date(year, month - 1, 1),
+				},
+			},
+		},
+		{
+			$group: {
+				_id: {
+					$ifNull: ["$category", "Other"],
+				},
+				totalAmount: {
+					$sum: "$amount",
+				},
+			},
+		},
+		{
+			$project: {
+				category: "$_id",
+				totalAmount: 1,
+				_id: 0,
+			},
+		},
+	]);
+
+	const monthBeforePreviousAggregation = await Transaction.aggregate([
+		{
+			$match: {
+				userId: new Types.ObjectId(userId),
+				transactionDate: {
+					$gte: new Date(year, month - 3, 1),
+					$lt: new Date(year, month - 2, 1),
+				},
+			},
+		},
+		{
+			$group: {
+				_id: {
+					$ifNull: ["$category", "Other"],
+				},
+				totalAmount: {
+					$sum: "$amount",
+				},
+			},
+		},
+		{
+			$project: {
+				category: "$_id",
+				totalAmount: 1,
+				_id: 0,
+			},
+		},
+	]);
+
+	return {
+		currentMonthAggregation,
+		previousMonthAggregation,
+		monthBeforePreviousAggregation,
+		month: new Date(year, month - 1, 1),
+	};
+};
+
+const retrieveDistinctCategories = async (userId) => {
+	try {
+		const distinctCategories = await Transaction.distinct("category", {
+			userId,
+		});
+		return distinctCategories;
+	} catch (error) {
+		console.error("Error fetching distinct categories", error);
+		throw error;
+	}
 };
 
 const retrieveOldestTransaction = async (userId) => {
@@ -129,4 +212,6 @@ module.exports = {
 	retrieveTransactionsByUserId,
 	deleteTransactions,
 	retrieveOldestTransaction,
+	retrieveTransactionAggregation,
+	retrieveDistinctCategories,
 };

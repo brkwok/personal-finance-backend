@@ -24,6 +24,8 @@ const {
 	retrieveTransactionsByUserId,
 	deleteTransactions,
 	retrieveOldestTransaction,
+	retrieveTransactionAggregation,
+	retrieveDistinctCategories,
 } = require("./transactions");
 
 module.exports = {
@@ -49,4 +51,6 @@ module.exports = {
 	retrieveTransactionsByUserId,
 	deleteTransactions,
 	retrieveOldestTransaction,
+	retrieveTransactionAggregation,
+	retrieveDistinctCategories,
 };

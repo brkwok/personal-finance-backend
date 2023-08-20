@@ -20,6 +20,7 @@ const transactionSchema = new mongoose.Schema(
 		},
 		category: {
 			type: String,
+			default: "Other",
 		},
 		subcategory: {
 			type: String,

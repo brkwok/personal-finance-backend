@@ -5,6 +5,8 @@ const router = express.Router();
 const {
 	retrieveTransactionsByUserId,
 	retrieveOldestTransaction,
+	retrieveTransactionAggregation,
+	retrieveDistinctCategories,
 } = require("../controllers");
 
 router.post("/", async (req, res) => {
@@ -12,13 +14,15 @@ router.post("/", async (req, res) => {
 	const { year, month } = req.body;
 
 	try {
-		const [transactions, transactionsAggregation] = await retrieveTransactionsByUserId(
+		const categoriesList = await retrieveDistinctCategories(userId);
+		const transactions = await retrieveTransactionsByUserId(
 			userId,
 			year,
 			month
 		);
+		const aggregation = await retrieveTransactionAggregation(userId, year, month);
 
-		res.json({transactions, transactionsAggregation});
+		res.json({ transactions, aggregation, categories: categoriesList });
 	} catch (err) {
 		console.error("Error retrieving transactions", err.message);
 		res.status(500).json(err);
