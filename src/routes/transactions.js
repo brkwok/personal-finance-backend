@@ -21,7 +21,7 @@ router.post("/", async (req, res) => {
 			month
 		);
 		const aggregation = await retrieveTransactionAggregation(userId, year, month);
-
+		
 		res.json({ transactions, aggregation, categories: categoriesList });
 	} catch (err) {
 		console.error("Error retrieving transactions", err.message);

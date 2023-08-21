@@ -1,5 +1,4 @@
 const { Transaction, Account } = require("../models");
-
 const { retrieveAccountByPlaidAccountId } = require("./accounts");
 const { Types } = require("mongoose");
 
@@ -93,7 +92,7 @@ const retrieveTransactionAggregation = async (
 					$ifNull: ["$category", "Other"],
 				},
 				totalAmount: {
-					$sum: "$amount",
+					$sum: { $abs: "$amount" },
 				},
 			},
 		},
@@ -122,7 +121,7 @@ const retrieveTransactionAggregation = async (
 					$ifNull: ["$category", "Other"],
 				},
 				totalAmount: {
-					$sum: "$amount",
+					$sum: { $abs: "$amount" },
 				},
 			},
 		},
@@ -151,7 +150,7 @@ const retrieveTransactionAggregation = async (
 					$ifNull: ["$category", "Other"],
 				},
 				totalAmount: {
-					$sum: "$amount",
+					$sum: { $abs: "$amount" },
 				},
 			},
 		},
@@ -173,11 +172,17 @@ const retrieveTransactionAggregation = async (
 };
 
 const retrieveDistinctCategories = async (userId) => {
+	function customSort(a, b) {
+		if (a[0] === "Other") return 1; // Move "Other" to the end
+		if (b[0] === "Other") return -1; // Keep "Other" in place
+		return 0; // No change for other categories
+	}
+
 	try {
 		const distinctCategories = await Transaction.distinct("category", {
 			userId,
 		});
-		return distinctCategories;
+		return distinctCategories.sort(customSort);
 	} catch (error) {
 		console.error("Error fetching distinct categories", error);
 		throw error;
