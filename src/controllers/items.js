@@ -1,22 +1,27 @@
 ObjectId = require("mongoose").Types.ObjectId;
+const { retrieveUserById } = require("./users");
 const { Item } = require("../models");
 
 const createItem = async (
 	plaidInstitutionId,
 	plaidAccessToken,
 	plaidItemId,
-	userId
+	userId,
+	institutionName
 ) => {
 	const status = "good";
 
 	let item = null;
+	const user = await retrieveUserById(userId);
+
 	try {
 		item = await new Item({
 			plaidAccessToken,
 			plaidInstitutionId,
 			plaidItemId,
-			userId,
+			user,
 			status,
+			institutionName,
 		}).save();
 	} catch (err) {
 		console.error(err.message);
@@ -62,7 +67,7 @@ const retrieveItemByPlaidItemId = async (plaidItemId) =>
  * @param {string} userId
  * @returns {Object[]}
  */
-const retrieveItemsByUser = async (userId) => await Item.find({ userId });
+const retrieveItemsByUser = async (userId) => await Item.find({ user: userId });
 
 /**
  *

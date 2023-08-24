@@ -1,9 +1,10 @@
+const { retrieveUserById } = require("./users");
 const { Transaction, Account } = require("../models");
 const { retrieveAccountByPlaidAccountId } = require("./accounts");
 const { Types } = require("mongoose");
 
 const createOrUpdateTransactions = async (transactions, userId) => {
-	const pendingQueries = await transactions.map(async (transaction) => {
+	const pendingQueries = transactions.map(async (transaction, i) => {
 		const {
 			account_id: plaidAccountId,
 			transaction_id: plaidTransactionId,
@@ -19,16 +20,16 @@ const createOrUpdateTransactions = async (transactions, userId) => {
 			account_owner: accountOwner,
 		} = transaction;
 
-		const { _id: accountId } = await retrieveAccountByPlaidAccountId(
-			plaidAccountId
-		);
+		const account = await retrieveAccountByPlaidAccountId(plaidAccountId);
+
+		const user = await retrieveUserById(userId);
 
 		const [category, subcategory] =
 			categories !== null ? [categories[0], categories[1]] : ["Other", "Other"];
 
 		try {
 			await Transaction.createOrUpdate(
-				accountId,
+				account,
 				plaidTransactionId,
 				plaidCategoryId,
 				category,
@@ -41,12 +42,14 @@ const createOrUpdateTransactions = async (transactions, userId) => {
 				transactionDate,
 				pending,
 				accountOwner,
-				userId
+				user
 			);
 		} catch (err) {
 			console.error(`createOrUpdate error: ${err.message}`);
 		}
 	});
+
+	return await Promise.all(pendingQueries);
 };
 
 const retrieveTransactionsByAccountId = async (accountId) =>
@@ -61,7 +64,7 @@ const retrieveTransactionsByUserId = async (
 	month = new Date().getMonth()
 ) => {
 	const transactions = await Transaction.find({
-		userId,
+		user: userId,
 		transactionDate: {
 			$gte: new Date(year, month - 1, 1),
 			$lt: new Date(year, month, 1),
@@ -76,10 +79,11 @@ const retrieveTransactionAggregation = async (
 	year = new Date().getFullYear(),
 	month = new Date().getMonth()
 ) => {
+
 	const currentMonthAggregation = await Transaction.aggregate([
 		{
 			$match: {
-				userId: new Types.ObjectId(userId),
+				user: new Types.ObjectId(userId),
 				transactionDate: {
 					$gte: new Date(year, month - 1, 1),
 					$lt: new Date(year, month, 1),
@@ -108,7 +112,7 @@ const retrieveTransactionAggregation = async (
 	const previousMonthAggregation = await Transaction.aggregate([
 		{
 			$match: {
-				userId: new Types.ObjectId(userId),
+				user: new Types.ObjectId(userId),
 				transactionDate: {
 					$gte: new Date(year, month - 2, 1),
 					$lt: new Date(year, month - 1, 1),
@@ -137,7 +141,7 @@ const retrieveTransactionAggregation = async (
 	const monthBeforePreviousAggregation = await Transaction.aggregate([
 		{
 			$match: {
-				userId: new Types.ObjectId(userId),
+				user: new Types.ObjectId(userId),
 				transactionDate: {
 					$gte: new Date(year, month - 3, 1),
 					$lt: new Date(year, month - 2, 1),
@@ -180,8 +184,9 @@ const retrieveDistinctCategories = async (userId) => {
 
 	try {
 		const distinctCategories = await Transaction.distinct("category", {
-			userId,
+			user: userId,
 		});
+
 		return distinctCategories.sort(customSort);
 	} catch (error) {
 		console.error("Error fetching distinct categories", error);
@@ -191,7 +196,7 @@ const retrieveDistinctCategories = async (userId) => {
 
 const retrieveOldestTransaction = async (userId) => {
 	const oldest = await Transaction.findOne(
-		{ userId },
+		{ user: userId },
 		{},
 		{ sort: { transactionDate: 1 } }
 	);

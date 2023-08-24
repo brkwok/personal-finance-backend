@@ -28,6 +28,10 @@ const {
 	retrieveDistinctCategories,
 } = require("./transactions");
 
+const {
+	retrieveUserById
+} = require("./users")
+
 module.exports = {
 	// items
 	createItem,
@@ -53,4 +57,6 @@ module.exports = {
 	retrieveOldestTransaction,
 	retrieveTransactionAggregation,
 	retrieveDistinctCategories,
+	//users
+	retrieveUserById
 };

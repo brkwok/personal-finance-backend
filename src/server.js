@@ -5,34 +5,39 @@ const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 const session = require("express-session");
 const passport = require("passport");
-const fs = require("fs");
-// const http = require("http");
-const https = require("https");
-const path = require("path");
 
 require("dotenv").config();
 
 const app = express();
+
+app.set("trust proxy", 1);
+
+app.use(function (req, res, next) {
+	console.log(req.headers);
+	if (req.headers["x-arr-ssl"] && !req.headers["x-forwarded-proto"]) {
+		req.headers["x-forwarded-proto"] = "https";
+	}
+
+	return next();
+});
+
 const PORT = process.env.PORT || 5000;
-
-const options = {
-	key: fs.readFileSync(path.resolve(__dirname) + "/ssl/key.pem", "utf8"),
-	cert: fs.readFileSync(path.resolve(__dirname) + "/ssl/cert.pem", "utf8"),
-};
-
-var httpsServer = https.createServer(options, app);
 
 const {
 	authRouter,
 	plaidRouter,
 	itemsRouter,
 	transactionsRouter,
+	accountsRouter,
 } = require("./routes");
 
 // Allow Cross-Origin Resource Sharing (CORS)
 app.use(
 	cors({
-		origin: "https://localhost:3000",
+		origin: [
+			"https://localhost:3000",
+			"https://mern-personal-finance-backend.azurewebsites.net",
+		],
 		credentials: true,
 		exposedHeaders: ["set-cookie"],
 	})
@@ -43,7 +48,7 @@ mongoose
 	.then(() => {
 		console.log("connected to database");
 		// Start the server after successfully connecting to the database
-		httpsServer.listen(PORT, () => {
+		app.listen(PORT, () => {
 			console.log("express server listening to " + PORT);
 		});
 	})
@@ -65,7 +70,13 @@ app.use(
 	session({
 		secret: process.env.SESSION_SECRET, // A secret key used to sign the session ID cookie
 		resave: true, // Force the session to be saved back to the session store even if it was not modified
-		cookie: { maxAge: 1000 * 60 * 60 }, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
+		cookie: {
+			maxAge: 1000 * 60 * 60,
+			secure: true,
+			httpOnly: true,
+			sameSite: "none",
+			domain: ".mern-personal-finance-backend.azurewebsites.net",
+		}, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
 		saveUninitialized: false, // Do not save uninitialized sessions (e.g., if the session is new but not modified)
 		store: MongoStore.create({
 			// Use connect-mongo to store sessions in MongoDB
@@ -86,3 +97,4 @@ app.use("/auth", authRouter);
 app.use("/plaid", ensureAuthenticated, plaidRouter);
 app.use("/items", ensureAuthenticated, itemsRouter);
 app.use("/transactions", ensureAuthenticated, transactionsRouter);
+app.use("/accounts", ensureAuthenticated, accountsRouter);

@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
-	userId: {
-		type: mongoose.SchemaTypes.ObjectId,
+	user: {
+		type: mongoose.Schema.Types.ObjectId,
 		ref: "User",
 	},
 	accounts: [
@@ -28,6 +28,10 @@ const itemSchema = new mongoose.Schema({
 	status: {
 		type: String,
 		required: true,
+	},
+	institutionName: {
+		type: String,
+		default: "",
 	},
 	createdAt: {
 		type: Date,

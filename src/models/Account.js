@@ -2,13 +2,17 @@ const mongoose = require("mongoose");
 
 const accountSchema = new mongoose.Schema(
 	{
-		itemId: {
-			type: mongoose.SchemaTypes.ObjectId,
-			ref: "Item",
+		item: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Item"
+		},
+		user: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
 		},
 		transactions: [
 			{
-				type: mongoose.SchemaTypes.ObjectId,
+				type: mongoose.Schema.Types.ObjectId,
 				ref: "Transaction",
 			},
 		],
@@ -59,14 +63,14 @@ const accountSchema = new mongoose.Schema(
 	},
 	{
 		statics: {
-			findByPlaidAccountId(plaidAccountId) {
-				return this.find({ plaidAccountId });
+			async findByPlaidAccountId(plaidAccountId) {
+				return await this.findOne( { plaidAccountId });
 			},
-			findByUserId(userId) {
-				return this.find({ userId });
+			async findByUserId(userId) {
+				return await this.find({ userId });
 			},
-			findByItemId(itemId) {
-				return this.find({ itemId });
+			async findByItemId(itemId) {
+				return await this.find({ item: itemId });
 			},
 		},
 	}

@@ -16,7 +16,7 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 	const userId = req.user.id;
 	const username = req.user.username;
 
-	const { publicToken, institutionId, accounts } = req.body;
+	const { publicToken, institutionId, accounts, institutionName } = req.body;
 
 	const existingItem = await retrieveItemByPlaidInstitutionId(
 		institutionId,
@@ -43,7 +43,7 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 		accessToken,
 		itemId,
 		userId,
-		accounts
+		institutionName
 	);
 
 	const updated = await updateTransactions(itemId, plaidClient, userId);

@@ -2,9 +2,13 @@ const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema(
 	{
-		accountId: {
-			type: mongoose.SchemaTypes.ObjectId,
+		account: {
+			type: mongoose.Schema.Types.ObjectId,
 			ref: "Account",
+		},
+		user: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
 		},
 		plaidTransactionId: {
 			type: String,
@@ -13,10 +17,6 @@ const transactionSchema = new mongoose.Schema(
 		},
 		plaidCategoryId: {
 			type: String,
-		},
-		userId: {
-			type: mongoose.SchemaTypes.ObjectId,
-			required: true,
 		},
 		category: {
 			type: String,
@@ -70,7 +70,7 @@ const transactionSchema = new mongoose.Schema(
 	{
 		statics: {
 			async createOrUpdate(
-				accountId,
+				account,
 				plaidTransactionId,
 				plaidCategoryId,
 				category,
@@ -83,14 +83,14 @@ const transactionSchema = new mongoose.Schema(
 				transactionDate,
 				pending,
 				accountOwner,
-				userId
+				user,
 			) {
 				const transaction = await this.findOne({ plaidTransactionId });
 
 				if (transaction) {
 					await transaction
 						.overwrite({
-							accountId,
+							account,
 							plaidTransactionId,
 							plaidCategoryId,
 							category,
@@ -103,12 +103,12 @@ const transactionSchema = new mongoose.Schema(
 							transactionDate,
 							pending,
 							accountOwner,
-							userId,
+							user,
 						})
 						.save();
 				} else {
 					await this.create({
-						accountId,
+						account,
 						plaidTransactionId,
 						plaidCategoryId,
 						category,
@@ -121,7 +121,7 @@ const transactionSchema = new mongoose.Schema(
 						transactionDate,
 						pending,
 						accountOwner,
-						userId,
+						user,
 					});
 				}
 			},

@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+	transactions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Transaction" }],
+	items: [{ type: mongoose.Schema.Types.ObjectId, ref: "Item" }],
+	accounts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Account" }],
 	googleId: {
 		type: String,
 		required: true,

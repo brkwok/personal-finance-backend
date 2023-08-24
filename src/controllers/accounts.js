@@ -1,8 +1,10 @@
-const { Account } = require("../models");
-const { retrieveItemByPlaidItemId } = require("./items");
+const { retrieveUserById } = require("./users");
+const { Account, Item, User } = require("../models");
+const { retrieveItemByPlaidItemId, retrieveItemsByUser } = require("./items");
 
-const createAccounts = async (plaidItemId, accounts) => {
-	const { _id: itemId } = await retrieveItemByPlaidItemId(plaidItemId);
+const createAccounts = async (plaidItemId, accounts, userId) => {
+	const item = await retrieveItemByPlaidItemId(plaidItemId);
+	const user = await retrieveUserById(userId);
 
 	const queries = accounts.map(async (account) => {
 		const {
@@ -20,8 +22,8 @@ const createAccounts = async (plaidItemId, accounts) => {
 			type,
 		} = account;
 
-		const acc = await Account.create({
-			itemId,
+		await Account.create({
+			item,
 			plaidAccountId,
 			name,
 			mask,
@@ -32,17 +34,17 @@ const createAccounts = async (plaidItemId, accounts) => {
 			unofficialCurrencyCode,
 			subtype,
 			type,
+			user,
 		});
-		return acc;
 	});
 
-	return queries;
+	return await Promise.all(queries);
 };
 
 const retrieveAccountByPlaidAccountId = async (plaidAccountId) => {
-	const accounts = await Account.findByPlaidAccountId(plaidAccountId);
+	const account = await Account.findByPlaidAccountId(plaidAccountId);
 
-	return accounts;
+	return account;
 };
 
 const retrieveAccountsByItemId = async (itemId) => {
@@ -52,9 +54,21 @@ const retrieveAccountsByItemId = async (itemId) => {
 };
 
 const retreiveAccountsByUserId = async (userId) => {
-	const accounts = await Account.findByUserId(userId);
+	const items = await retrieveItemsByUser(userId);
 
-	return accounts;
+	const accountsMap = {};
+
+	await Promise.all(
+		items.map(async (item) => {
+			const { _id } = item;
+
+			const itemAccounts = await retrieveAccountsByItemId(_id);
+
+			accountsMap[item.institutionName] =  itemAccounts;
+		})
+	);
+
+	return accountsMap;
 };
 
 module.exports = {
