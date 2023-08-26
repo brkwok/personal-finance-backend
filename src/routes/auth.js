@@ -85,7 +85,12 @@ router.post("/demo", (req, res, next) => {
 				return res.status(500).send({ error: "An error occurred" });
 			}
 
-			return res.status(200).send({ displayName: user.displayName, profilePicUrl: user.profilePicUrl });
+			return res
+				.status(200)
+				.send({
+					displayName: user.displayName,
+					profilePicUrl: user.profilePicUrl,
+				});
 		});
 	})(req, res, next);
 });
@@ -113,10 +118,8 @@ router.get("/user", ensureAuthenticated, async function (req, res) {
 
 		// Return the user data as the API response
 		res.status(200).send({
-			data: {
-				displayName: user.displayName,
-				profilePicUrl: user.profilePicUrl,
-			},
+			displayName: user.displayName,
+			profilePicUrl: user.profilePicUrl,
 		});
 	} catch (error) {
 		console.error(error.message);

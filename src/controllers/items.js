@@ -44,7 +44,7 @@ const retrieveItemById = async (itemId) => await Item.findById(itemId);
  * @returns {Object}
  */
 const retrieveItemByPlaidInstitutionId = async (plaidInstitutionId, userId) =>
-	await Item.findOne({ userId, plaidInstitutionId });
+	await Item.findOne({ user: userId, plaidInstitutionId });
 
 /**
  *

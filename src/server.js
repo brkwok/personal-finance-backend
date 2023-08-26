@@ -37,6 +37,7 @@ app.use(
 		origin: [
 			"https://localhost:3000",
 			"https://mern-personal-finance-backend.azurewebsites.net",
+			"https://brkwok.github.io",
 		],
 		credentials: true,
 		exposedHeaders: ["set-cookie"],

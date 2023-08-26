@@ -16,7 +16,7 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 	const userId = req.user.id;
 	const username = req.user.username;
 
-	const { publicToken, institutionId, accounts, institutionName } = req.body;
+	const { publicToken, institutionId, institutionName } = req.body;
 
 	const existingItem = await retrieveItemByPlaidInstitutionId(
 		institutionId,
@@ -26,7 +26,11 @@ router.post("/", ensureAuthenticated, async function (req, res) {
 	if (existingItem) {
 		return res
 			.status(409)
-			.json("You have already linked an item at this institution.");
+			.json({
+				error: {
+					message: "You have already linked an item at this institution.",
+				},
+			});
 	}
 
 	const plaidClient = username === "demo" ? demoClient : client;

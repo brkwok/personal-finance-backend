@@ -64,7 +64,11 @@ const retreiveAccountsByUserId = async (userId) => {
 
 			const itemAccounts = await retrieveAccountsByItemId(_id);
 
-			accountsMap[item.institutionName] =  itemAccounts;
+			if (accountsMap[item.institutionName] === undefined) {
+				accountsMap[item.institutionName] = itemAccounts;
+			} else {
+				accountsMap[item.institutionName].push(...itemAccounts);
+			}
 		})
 	);
 
