@@ -5,7 +5,6 @@ const {
 	deleteTransactions,
 	updateItemTransactionsCursor,
 } = require("../controllers");
-const { Account } = require("../models");
 
 const fetchTransactionUpdates = async (plaidItemId, client) => {
 	const { plaidAccessToken: accessToken, transactionsCursor: lastCursor } =
@@ -45,7 +44,12 @@ const fetchTransactionUpdates = async (plaidItemId, client) => {
 	return { added, modified, removed, cursor, accessToken };
 };
 
-const updateTransactions = async (plaidItemId, client, userId) => {
+const updateTransactions = async (
+	plaidItemId,
+	client,
+	userId,
+	updating = false
+) => {
 	const { added, modified, removed, cursor, accessToken } =
 		await fetchTransactionUpdates(plaidItemId, client);
 
@@ -58,7 +62,9 @@ const updateTransactions = async (plaidItemId, client, userId) => {
 	} = await client.accountsGet(request);
 
 	try {
-		await createAccounts(plaidItemId, accounts, userId);
+		if (!updating) {
+			await createAccounts(plaidItemId, accounts, userId);
+		}
 		await createOrUpdateTransactions(added.concat(modified), userId);
 		await deleteTransactions(removed);
 		await updateItemTransactionsCursor(plaidItemId, cursor);

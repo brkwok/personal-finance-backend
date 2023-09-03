@@ -83,7 +83,7 @@ const transactionSchema = new mongoose.Schema(
 				transactionDate,
 				pending,
 				accountOwner,
-				user,
+				user
 			) {
 				const transaction = await this.findOne({ plaidTransactionId });
 
@@ -104,6 +104,8 @@ const transactionSchema = new mongoose.Schema(
 							pending,
 							accountOwner,
 							user,
+							updatedAt: Date.now(),
+							createdAt: transaction.createdAt,
 						})
 						.save();
 				} else {

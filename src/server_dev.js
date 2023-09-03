@@ -5,6 +5,9 @@ const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 const session = require("express-session");
 const passport = require("passport");
+const path = require("path");
+const fs = require("fs");
+const https = require("https");
 
 require("dotenv").config();
 
@@ -13,7 +16,6 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(function (req, res, next) {
-	console.log(req.headers);
 	if (req.headers["x-arr-ssl"] && !req.headers["x-forwarded-proto"]) {
 		req.headers["x-forwarded-proto"] = "https";
 	}
@@ -49,9 +51,17 @@ mongoose
 	.then(() => {
 		console.log("connected to database");
 		// Start the server after successfully connecting to the database
-		app.listen(PORT, () => {
-			console.log("express server listening to " + PORT);
-		});
+		https
+			.createServer(
+				{
+					key: fs.readFileSync(path.resolve(__dirname, "key.pem")),
+					cert: fs.readFileSync(path.resolve(__dirname, "cert.pem")),
+				},
+				app
+			)
+			.listen(PORT, () => {
+				console.log("express server listening to " + PORT);
+			});
 	})
 	.catch((err) => {
 		console.error(err.message);
@@ -78,7 +88,6 @@ app.use(
 			secure: true,
 			httpOnly: true,
 			sameSite: "none",
-			domain: ".mern-personal-finance-backend.azurewebsites.net",
 		}, // Set the maximum age of the session cookie to 1 hour (in milliseconds)
 		saveUninitialized: false, // Do not save uninitialized sessions (e.g., if the session is new but not modified)
 		store: MongoStore.create({
