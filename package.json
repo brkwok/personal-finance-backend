@@ -28,7 +28,7 @@
 		"passport": "^0.6.0",
 		"passport-google-oauth20": "^2.0.0",
 		"passport-local": "^1.0.0",
-		"plaid": "^15.2.0"
+		"plaid": "^15.5.0"
 	},
 	"devDependencies": {
 		"nodemon": "^3.0.1"
